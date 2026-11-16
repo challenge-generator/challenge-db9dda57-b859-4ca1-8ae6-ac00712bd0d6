@@ -1,0 +1,134 @@
+spring:
+  application:
+    name: finance-api
+  datasource:
+    url: jdbc:h2:mem:financedb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: false
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/finance-api.log
+    max-size: 10MB
+    max-history: 30
+
+app:
+  transaction:
+    duplicate-window-minutes: 5
+    max-retry-attempts: 3
+    retry-delay-ms: 1000
+  external-service:
+    payment:
+      base-url: http://localhost:9090
+      timeout-seconds: 30
+      connection-timeout-seconds: 10
+      read-timeout-seconds: 20
+    notification:
+      base-url: http://localhost:9091
+      timeout-seconds: 10
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:financedb
+  jpa:
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+
+logging:
+  level:
+    root: DEBUG
+    com.example: TRACE
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:h2:file:./data/financedb
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.example: INFO
+  file:
+    name: /var/log/finance-api/finance-api.log
+    max-size: 50MB
+    max-history: 90
